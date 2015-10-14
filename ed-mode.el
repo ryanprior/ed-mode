@@ -1,12 +1,15 @@
-;;; emacsed.el -- ed for Emacs.
+;;; ed-mode.el --- ed for Emacs.
 
-;; Copyright (c) 2005 Antti Nykänen <aon@iki.fi>
-;;
+;; Copyright © 2015 the ed-mode contributors
+
+;; This file is not part of GNU Emacs.
+
+;; This file is free software.
 ;; Permission to use, copy, modify, and distribute this software for
 ;; any purpose with or without fee is hereby granted, provided that
 ;; the above copyright notice and this permission notice appear in all
 ;; copies.
-;;
+
 ;; THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL
 ;; WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED
 ;; WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE
@@ -16,21 +19,30 @@
 ;; NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
 ;; CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
-;; Author: Antti Nykänen
-;; X-RCS: $Id: emacsed.el,v 1.47 2005/09/10 07:03:24 aon Exp $
-;; URL: http://aon.iki.fi/emacsed.html
+;; Author: Antti Nykänen <aon@iki.fi>
+;; Maintainer: Ryan Prior <ryanprior@gmail.com>
+;; URL: https://github.com/ryanprior/ed-mode
+;; ORIGIN: http://aon.iki.fi/files/emacsed/emacsed.el
 ;; Keywords: emulation
 
 ;;; Commentary:
 
-;; emacsed.el lets you interact with Emacs buffers like you would do
-;; with the ed editor.
+;; ed-mode lets you interact with Emacs buffers like you would do with
+;; the ed editor.
 
 ;; Make sure that this file is somewhere along your load-path, then
-;; add (require 'ed) into your .emacs
+;; add (require 'ed) to your init file.
 
 ;; Use ed by opening a file like you'd normally do, and then do:
 ;; M-x ed RET
+
+;;; Code:
+
+(defgroup ed nil
+  "ed for Emacs."
+  :prefix "ed-"
+  :group 'emulations
+  :link '(url-link :tag "Github" "https://github.com/ryanprior/ed-mode"))
 
 (defvar ed-mode-hook nil
   "Hook run when entering ed mode.")
@@ -483,4 +495,4 @@ replace it."
 
 (provide 'ed)
 
-;;; emacsed.el ends here.
+;;; ed-mode.el ends here.
