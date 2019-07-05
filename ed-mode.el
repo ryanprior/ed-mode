@@ -44,6 +44,9 @@
   :group 'emulations
   :link '(url-link :tag "Github" "https://github.com/ryanprior/ed-mode"))
 
+(defvar ed-last-error-message ""
+  "The most recent error message.")
+
 (defvar ed-mode-hook nil
   "Hook run when entering ed mode.")
 
@@ -61,10 +64,10 @@
     ;;("e" "ed-cmd-edit-file")
     ;;("E" "ed-cmd-edit-file-unconditionally")
     ("f" "ed-cmd-file")
-    ;;("g" "ed-command-global")
-    ;;("G" "ed-command-global-interactive")
-    ;;("h" "ed-command-print-last-error")
-    ;;("H" "ed-command-verbose-errors")
+    ;;("g" "ed-cmd-global")
+    ;;("G" "ed-cmd-global-interactive")
+    ("h" "ed-cmd-print-last-error")
+    ;;("H" "ed-cmd-verbose-errors")
     ("i" "ed-cmd-insert")
     ("j" "ed-cmd-join")
     ("k" "ed-cmd-mark")
@@ -79,8 +82,8 @@
     ("s" "ed-cmd-replace")
     ("t" "ed-cmd-transfer")
     ("u" "ed-cmd-undo")
-    ;;("v" "ed-command-global-inverse")
-    ;;("V" "ed-command-global-interactive-inverse")
+    ;;("v" "ed-cmd-global-inverse")
+    ;;("V" "ed-cmd-global-interactive-inverse")
     ("w" "ed-cmd-write")
     ;;("wq" "ed-cmd-write-and-quit")
     ;;("W" "ed-cmd-write-append")
@@ -291,9 +294,11 @@ replace it."
                         (if (equal (char-after (1- start-pos)) ?\n) 1 0))
                      end-pos))))
 
-(defun ed-cmd-error (&rest unused)
+(defun ed-cmd-error (&optional verbose-p &rest unused)
   "Throw the error message."
-  (insert "\n?"))
+  (if verbose-p
+      (insert ed-last-error-message)
+    (insert "\n?")))
 
 (defun ed-cmd-exec (args &rest unused)
   (if (or (not (equal end ""))
@@ -375,16 +380,24 @@ replace it."
     (goto-line end))
   (insert "\n" (pop kill-ring)))
 
+(defun ed-cmd-print-last-error (&rest unused)
+  "Print most recent error."
+  (insert "\n" ed-last-error-message))
 (defun ed-cmd-prompt (&rest unused)
   "Toggle the prompt."
   (setq ed-display-prompt (not ed-display-prompt)))
 
 (defun ed-cmd-quit (&rest unused)
   "Quit ed."
-  (let ((ed-buffer (ed-get-ed-buffer)))
-    (if (> (length (window-list)) 1)
-        (delete-window (get-buffer-window ed-buffer)))
-    (kill-buffer ed-buffer)))
+  (if (buffer-modified-p ed-associated-buffer)
+      (progn
+        (message "ed-mode: Attempting to quit modified file.")
+        (setq ed-last-error-message "Warning: buffer modified.")
+        (ed-cmd-error))
+    (let ((ed-buffer (ed-get-ed-buffer)))
+      (if (> (length (window-list)) 1)
+          (delete-window (get-buffer-window ed-buffer)))
+      (kill-buffer ed-buffer))))
 
 (defun ed-cmd-read (args start end)
   "Insert a file to the buffer."
