@@ -47,6 +47,9 @@
 (defvar ed-last-error-message ""
   "The most recent error message.")
 
+(defvar ed-verbose-errors-p nil
+  "Whether or not verbose errors should be shown by default.")
+
 (defvar ed-mode-hook nil
   "Hook run when entering ed mode.")
 
@@ -67,7 +70,7 @@
     ;;("g" "ed-cmd-global")
     ;;("G" "ed-cmd-global-interactive")
     ("h" "ed-cmd-print-last-error")
-    ;;("H" "ed-cmd-verbose-errors")
+    ("H" "ed-cmd-verbose-errors")
     ("i" "ed-cmd-insert")
     ("j" "ed-cmd-join")
     ("k" "ed-cmd-mark")
@@ -296,8 +299,8 @@ replace it."
 
 (defun ed-cmd-error (&optional verbose-p &rest unused)
   "Throw the error message."
-  (if verbose-p
-      (insert ed-last-error-message)
+  (if (or ed-verbose-errors-p verbose-p)
+      (insert "\n" ed-last-error-message)
     (insert "\n?")))
 
 (defun ed-cmd-exec (args &rest unused)
@@ -380,9 +383,12 @@ replace it."
     (goto-line end))
   (insert "\n" (pop kill-ring)))
 
-(defun ed-cmd-print-last-error (&rest unused)
+(defun ed-cmd-print-last-error (&optional verbose-p &rest unused)
   "Print most recent error."
-  (insert "\n" ed-last-error-message))
+  (if (or ed-verbose-errors-p verbose-p)
+      (insert "\n" ed-last-error-message)
+    (insert "\n?")))
+
 (defun ed-cmd-prompt (&rest unused)
   "Toggle the prompt."
   (setq ed-display-prompt (not ed-display-prompt)))
@@ -479,6 +485,11 @@ replace it."
   "Undo, currently doesn't probably do what it should."
   (with-current-buffer ed-associated-buffer
     (undo)))
+
+(defun ed-cmd-verbose-errors (&rest unused)
+  "Toggle verbose error messages."
+  (setq ed-verbose-errors-p (not ed-verbose-errors-p))
+  (ed-cmd-print-last-error))
 
 (defun ed-cmd-write (&rest unused)
   "Write changes to the buffer being edited."
