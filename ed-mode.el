@@ -87,7 +87,7 @@
     ;;("x" "ed-cmd-paste")
     ;;("y" "ed-cmd-copy")
     ;;("z" "ed-cmd-scroll")
-    ;;("#" "ed-cmd-comment")
+    ("#" "ed-cmd-comment")
     )
   "Associated list for ed commands and their respective
 functions.")
@@ -226,7 +226,6 @@ in separate strings."
             (insert line "\n")))
       (if (< (length line) 1)
           (progn
-            (message "next line")
             (ed-goto-line-print (+ (ed-strtonum ".") 1)))
         (let* ((extracted (ed-num-extract line))
                (start (car extracted))
@@ -274,6 +273,9 @@ in separate strings."
 replace it."
   (setq ed-is-inserting t)
   (ed-cmd-delete args start end))
+
+(defun ed-cmd-comment (&rest unused)
+  "Add a comment without executing any commands.")
 
 (defun ed-cmd-delete (args start end)
   "Delete the text between start and end."
