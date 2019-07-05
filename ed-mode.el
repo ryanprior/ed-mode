@@ -210,7 +210,9 @@ in separate strings."
           (with-current-buffer ed-associated-buffer
             (insert line "\n")))
       (if (< (length line) 1)
-          (ed-cmd-error)
+          (progn
+            (message "next line")
+            (ed-goto-line-print (+ (ed-strtonum ".") 1)))
         (let* ((extracted (ed-num-extract line))
                (start (car extracted))
                (end (nth 1 extracted))
