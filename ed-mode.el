@@ -50,6 +50,9 @@
 (defvar ed-verbose-errors-p nil
   "Whether or not verbose errors should be shown by default.")
 
+(defvar ed-quit-already-attempted-p nil
+  "Whether or not a quit has already been attempted.")
+
 (defvar ed-mode-hook nil
   "Hook run when entering ed mode.")
 
@@ -80,7 +83,7 @@
     ("p" "ed-cmd-print")
     ("P" "ed-cmd-prompt")
     ("q" "ed-cmd-quit")
-    ;;("Q" "ed-cmd-quit-unconditionally")
+    ("Q" "ed-cmd-quit-unconditionally")
     ("r" "ed-cmd-read")
     ("s" "ed-cmd-replace")
     ("t" "ed-cmd-transfer")
@@ -248,14 +251,14 @@ in separate strings."
                 (< (ed-strtonum end) 1)
                 (and (not (equal end ""))
                      (< (ed-strtonum end) (ed-strtonum start))))
-            (ed-cmd-error))
+            (ed-cmd-error "Undefined error."))
            (function
             (funcall function args start end))
            ((not (equal end ""))
             (ed-goto-line-print (ed-strtonum end)))
            (start
             (ed-goto-line-print (ed-strtonum start)))
-           (t (ed-cmd-error))))))))
+           (t (ed-cmd-error "Undefined error."))))))))
 
 (defun ed-get-ed-buffer ()
   "Gets the buffer of this ed instance."
@@ -266,6 +269,19 @@ in separate strings."
   (with-current-buffer ed-associated-buffer
     (goto-line line))
   (ed-cmd-print "" "." ""))
+
+(defun ed-quit-buffer (&optional force-quit-p)
+  "Quit an ed buffer."
+  (if (or force-quit-p
+          ed-quit-already-attempted-p
+          (not (buffer-modified-p ed-associated-buffer)))
+      (let ((ed-buffer (ed-get-ed-buffer)))
+        (if (> (length (window-list)) 1)
+            (delete-window (get-buffer-window ed-buffer)))
+        (kill-buffer ed-buffer)
+        (setq ed-quit-already-attempted-p nil))
+    (setq ed-quit-already-attempted-p t)
+    (ed-cmd-error "Warning: buffer modified.")))
 
 (defun ed-cmd-append (args start end)
   "Start appending text."
@@ -297,8 +313,9 @@ replace it."
                         (if (equal (char-after (1- start-pos)) ?\n) 1 0))
                      end-pos))))
 
-(defun ed-cmd-error (&optional verbose-p &rest unused)
+(defun ed-cmd-error (message &optional verbose-p &rest unused)
   "Throw the error message."
+  (setq ed-last-error-message message)
   (if (or ed-verbose-errors-p verbose-p)
       (insert "\n" ed-last-error-message)
     (insert "\n?")))
@@ -306,7 +323,7 @@ replace it."
 (defun ed-cmd-exec (args &rest unused)
   (if (or (not (equal end ""))
           (< (length args) 1))
-      (ed-cmd-error))
+      (ed-cmd-error "Undefined error."))
   (insert "\n" (shell-command-to-string args) "!"))
 
 (defun ed-cmd-file (&rest unused)
@@ -339,7 +356,7 @@ replace it."
       (progn
         (setq ed-mark-alist (remove (assoc args ed-mark-alist) ed-mark-alist))
         (push (cons args (ed-strtonum start)) ed-mark-alist))
-    (ed-cmd-error)))
+    (ed-cmd-error "Undefined error.")))
 
 (defun ed-cmd-move (args start end)
   "Move lines."
@@ -393,24 +410,20 @@ replace it."
   "Toggle the prompt."
   (setq ed-display-prompt (not ed-display-prompt)))
 
-(defun ed-cmd-quit (&rest unused)
+(defun ed-cmd-quit (&optional force-quit-p &rest unused)
   "Quit ed."
-  (if (buffer-modified-p ed-associated-buffer)
-      (progn
-        (message "ed-mode: Attempting to quit modified file.")
-        (setq ed-last-error-message "Warning: buffer modified.")
-        (ed-cmd-error))
-    (let ((ed-buffer (ed-get-ed-buffer)))
-      (if (> (length (window-list)) 1)
-          (delete-window (get-buffer-window ed-buffer)))
-      (kill-buffer ed-buffer))))
+  (ed-quit-buffer))
+
+(defun ed-cmd-quit-unconditionally (&rest unused)
+  "Quit ed unconditionally, regardless of modified buffer."
+  (ed-quit-buffer t))
 
 (defun ed-cmd-read (args start end)
   "Insert a file to the buffer."
   (setq start (ed-strtonum start))
   (if (or (not (equal end ""))
           (< (length args) 2))
-      (ed-cmd-error)
+      (ed-cmd-error "Undefined error.")
     (progn
       (with-current-buffer ed-associated-buffer
         (goto-line (1+ start))
@@ -434,7 +447,7 @@ replace it."
           (setq split-regexp (cdr split-regexp)))
       (if (not (or (= (length split-regexp) 2)
                    (= (length split-regexp) 3)))
-          (ed-cmd-error)
+          (ed-cmd-error "Undefined error.")
         (let ((from (car split-regexp))
               (to (nth 1 split-regexp))
               (arg (if (= (length split-regexp) 2) "" (nth 2 split-regexp))))
