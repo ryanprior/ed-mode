@@ -140,8 +140,8 @@ command mode."
         (setq num "-1"))
        ((equal num "+")
         (setq num "+1")))
-      (+ (ed-line-number-at-pos) (string-to-int num)))
-     (t (string-to-int num)))))
+      (+ (ed-line-number-at-pos) (string-to-number num)))
+     (t (string-to-number num)))))
 
 (defun ed-num-extract (string)
   "Return a list with the addresses and the rest of the command
